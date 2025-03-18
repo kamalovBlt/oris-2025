@@ -12,6 +12,7 @@
     <modules>
         <module>lab01-context</module>
         <module>lab-02-spring-context</module>
+        <module>lab-03-tomcat</module>
     </modules>
 
     <properties>

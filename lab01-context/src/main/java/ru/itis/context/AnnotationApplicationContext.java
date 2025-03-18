@@ -11,7 +11,8 @@ import java.util.*;
 
 public class AnnotationApplicationContext implements ApplicationContext {
 
-    private final Map<String, Object> beans = new HashMap<>(30);
+    private final Map<String, Object> beans = new HashMap<>(8);
+    private final Map<String, Object> controllers = new HashMap<>(8);
     private final String packageName;
 
     public AnnotationApplicationContext(String packageName) {
@@ -22,7 +23,11 @@ public class AnnotationApplicationContext implements ApplicationContext {
     public Object getBean(String name) {
         Object object = this.beans.get(name);
         if (object == null) {
-            throw new NoSuchBeanException(name);
+            Object controller = this.controllers.get(name);
+            if (controller == null) {
+                throw new NoSuchBeanException(name);
+            }
+            return controller;
         }
         return object;
     }
@@ -31,7 +36,11 @@ public class AnnotationApplicationContext implements ApplicationContext {
     public <T> T getBean(String name, Class<T> requiredType) {
         Object object = this.beans.get(name);
         if (object == null || !requiredType.isAssignableFrom(object.getClass())) {
-            throw new NoSuchBeanException(name);
+            Object controller = this.controllers.get(name);
+            if (controller == null || !requiredType.isAssignableFrom(controller.getClass())) {
+                throw new NoSuchBeanException(name);
+            }
+            return requiredType.cast(controller);
         }
         return requiredType.cast(object);
     }
@@ -70,8 +79,13 @@ public class AnnotationApplicationContext implements ApplicationContext {
         this.beans.clear();
     }
 
+    @Override
+    public Map<String, Object> getControllers() {
+        return controllers;
+    }
+
     private List<Class<?>> checkFoundedClassesAndRemainOnlyComponentClasses(List<Class<?>> foundedClasses) {
-        foundedClasses.removeIf(actualClass -> !actualClass.isAnnotationPresent(Component.class));
+        foundedClasses.removeIf(actualClass -> !actualClass.isAnnotationPresent(Component.class) && !actualClass.isAnnotationPresent(Controller.class));
         return foundedClasses;
     }
 
@@ -82,35 +96,44 @@ public class AnnotationApplicationContext implements ApplicationContext {
         }
 
         try {
-
             Constructor<?>[] constructors = actualClass.getConstructors();
             Optional<Constructor<?>> constructorWithMaxParametersCount = Arrays.stream(constructors).max(Comparator.comparingInt(Constructor::getParameterCount));
+
             Constructor<?> constructor = constructorWithMaxParametersCount
                     .orElseThrow(() ->
                             new NoFoundPublicConstructorException("No found public constructor for " + actualClass.getName()
                             ));
 
+
             Parameter[] parameters = constructor.getParameters();
             List<Object> dependencies = new ArrayList<>(parameters.length);
             for (Parameter parameter : parameters) {
                 String parameterName = parameter.getName();
-                if (this.beans.containsKey(parameterName)) {
-                    dependencies.add(this.beans.get(parameterName));
-                } else {
-                    Object dependency = createBean(parameter.getType());
+                try {
+                    Object parameterObject = getBean(parameterName);
+                    if (parameterObject != null) {
+                        dependencies.add(parameterObject);
+                    }
+                } catch (NoSuchBeanException _) {
+                    Object dependency = createBean(actualClass);
                     dependencies.add(dependency);
                 }
+
             }
 
             Object createdBean;
             if (!dependencies.isEmpty()) {
                 createdBean = constructor.newInstance(dependencies.toArray());
-            }
-            else {
+            } else {
                 createdBean = constructor.newInstance();
             }
             injectDependencies(createdBean);
-            this.beans.put(generateBeanName(createdBean.getClass()), createdBean);
+            if (actualClass.isAnnotationPresent(Controller.class)) {
+                this.controllers.put(generateBeanName(actualClass), createdBean);
+            }
+            else if (actualClass.isAnnotationPresent(Component.class)) {
+                this.beans.put(generateBeanName(createdBean.getClass()), createdBean);
+            }
             return createdBean;
 
         } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
@@ -143,10 +166,9 @@ public class AnnotationApplicationContext implements ApplicationContext {
 
         for (Field field : fields) {
             if (field.isAnnotationPresent(Inject.class)) {
-                Object foundedBean = this.beans.get(generateBeanName(field.getType()));
+                Object foundedBean = getBean(generateBeanName(field.getType()));
                 if (foundedBean == null) {
-                    Object createdBean = createBean(field.getType());
-                    this.beans.put(generateBeanName(createdBean.getClass()), createdBean);
+                    createBean(field.getType());
                 }
             }
         }
@@ -157,7 +179,7 @@ public class AnnotationApplicationContext implements ApplicationContext {
             if (method.getName().startsWith("set")) {
                 String name = method.getName();
                 String dependencyName = name.substring(3, 4).toLowerCase() + name.substring(4);
-                method.invoke(bean, this.beans.get(dependencyName));
+                method.invoke(bean, getBean(dependencyName));
             }
         }
 

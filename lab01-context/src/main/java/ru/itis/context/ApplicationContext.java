@@ -1,8 +1,6 @@
 package ru.itis.context;
 
-import java.io.File;
-import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 
 public interface ApplicationContext {
 
@@ -13,5 +11,7 @@ public interface ApplicationContext {
     void run();
 
     void close();
+
+    Map<String, Object> getControllers();
 
 }
