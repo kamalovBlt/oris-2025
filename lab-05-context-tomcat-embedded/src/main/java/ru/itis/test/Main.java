@@ -2,14 +2,9 @@ package ru.itis.test;
 
 import ru.itis.mvc.WebMvcApplication;
 
-public class Application {
-
+public class Main {
     public static void main(String[] args) {
-        WebMvcApplication webMvcApplication = new WebMvcApplication("ru.itis.test");
+        WebMvcApplication webMvcApplication = new WebMvcApplication(Config.class);
         webMvcApplication.run("");
     }
-
 }
-
-
-
