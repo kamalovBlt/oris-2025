@@ -9,7 +9,9 @@ import java.lang.reflect.*;
 import java.sql.*;
 import java.util.*;
 
-public class SimpleEntityManager implements EntityManager {
+public class SimpleEntityManager implements EntityManager, AutoCloseable {
+
+
 
     private final Connection connection;
     private final Map<String, SqlStatement> sqlStatements;
@@ -307,6 +309,11 @@ public class SimpleEntityManager implements EntityManager {
         }
 
         return results;
+    }
+
+    @Override
+    public void close() throws Exception {
+        connection.close();
     }
 
 
