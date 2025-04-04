@@ -16,6 +16,7 @@
         <module>lab-04-model-and-view</module>
         <module>lab-05-context-tomcat-embedded</module>
         <module>lab-06-spring-mvc</module>
+        <module>lab-07-orm</module>
     </modules>
 
     <properties>
