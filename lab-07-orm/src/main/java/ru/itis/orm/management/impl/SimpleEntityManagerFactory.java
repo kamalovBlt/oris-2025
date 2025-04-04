@@ -29,7 +29,6 @@ public class SimpleEntityManagerFactory implements EntityManagerFactory {
         this.packageToScan = packageToScan;
         scanPackageAndSaveTableName();
         scanPackageAndBuildMetadata();
-        entityMetadataMap.forEach((k, v) -> System.out.println(k + " " + v));
         String createOrUpdateSql = createOrUpdate(entityMetadataMap);
         initializeSqlStatements();
 

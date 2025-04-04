@@ -9,5 +9,5 @@ public interface EntityManager {
     void remove(Object entity);
     <T> T find(Class<T> entityType, long id);
     <T> List<T> findAll(Class<T> entityType);
-
+    void close();
 }

@@ -27,12 +27,13 @@ public class Main {
         Passport findedPassport = entityManager.find(Passport.class, 1);
         User findedUser = entityManager.find(User.class, 1);
         Post findedPost = entityManager.find(Post.class, 1);
-        entityManager.remove(user);
-
         user.setName("TEST_UPDATED");
-        User updated = entityManager.update(user);
-        List<Post> all = entityManager.findAll(Post.class);
+        User updatedUser = entityManager.update(user);
+        List<Post> allPosts = entityManager.findAll(Post.class);
+        entityManager.remove(user);
+        entityManager.close();
         System.out.println();
+
 
     }
 

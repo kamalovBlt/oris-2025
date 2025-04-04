@@ -241,7 +241,6 @@ public class SimpleEntityManager implements EntityManager, AutoCloseable {
                     Class<?> oneToManyEntityClass = entityMetadataMap.get(entityName).entityClass();
 
                     String oneToManySql = "SELECT * FROM " + fetchMetadata.tableName() + " WHERE " + toLowerCaseFirstChar(entityType.getSimpleName()) + "_id = ?";
-                    System.out.println(oneToManySql);
                     try (PreparedStatement oneToManyStmt = connection.prepareStatement(oneToManySql)) {
                         oneToManyStmt.setLong(1, id);
                         ResultSet oneToManyResultSet = oneToManyStmt.executeQuery();
@@ -312,8 +311,12 @@ public class SimpleEntityManager implements EntityManager, AutoCloseable {
     }
 
     @Override
-    public void close() throws Exception {
-        connection.close();
+    public void close() {
+        try {
+            connection.close();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
 
