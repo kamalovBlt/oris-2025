@@ -17,6 +17,8 @@
         <module>lab-05-context-tomcat-embedded</module>
         <module>lab-06-spring-mvc</module>
         <module>lab-07-orm</module>
+        <module>lab-08-hibernate</module>
+        <module>lab-09-spring-data-jpa</module>
     </modules>
 
     <properties>
